@@ -62,21 +62,13 @@
 		
 	</style>
 </head>
-<body>
-			<section class="section text-center light-bg">
-					<h1 class="h1 alt-font medium-weight em">
-						London's 1854 Cholera Epidemic</h1>
-			</section>
-
-		<br/><br/>
-		<div class="pagetext">
-			<p>
-			<a href="Project1_Documentation.pdf">Click here to see a documentation.</a>
-			</p>
-			<p>
-			<a href="https://youtu.be/">Click here to see a video demonstration.</a>
-			</p>
-		</div>
+     <div class="admintitle" align="center" style="background-color:#8B0000; color:#fff; margin-left:50px; margin-right:50px; height:60px;">
+            <h3>
+                  <a href="Project1_Documentation.pdf" style="float:left; margin-left:30px; color:#fff">View Design Documentation</a></h3>
+                  <h3><a href="https://youtu.be/" style="float:right; margin-right:30px; color:#fff">Video Demo</a></h3>
+                  
+              <h1>Dr. John Snow's Cholera Epidemic Map from 1854</h1>
+        </div>
 		<svg id="map" width="49%" viewBox="0 0 600 500">
 		</svg>
 		<svg id="graph" width="49%" viewBox="0 0 600 500">
@@ -176,10 +168,10 @@
 		function displayTotal() {
 			resetElements();
 			
-			map.selectAll('.death').attr('fill','red');
+			map.selectAll('.death').attr('fill','orange');
 				
 			graph.select('#graphlinetotal')
-				.attr('stroke','red')
+				.attr('stroke','orange')
 				.attr('opacity','1');
 		}
 		
@@ -349,7 +341,7 @@
 				.attr("y", graphHeight + buttonPadding)
 				.attr("width", buttonWidth)
 				.attr("height", buttonHeight)
-				.attr("fill", "red")
+				.attr("fill", "orange")
 				.on('click', function(d) {
 					displayTotal();
 				});
