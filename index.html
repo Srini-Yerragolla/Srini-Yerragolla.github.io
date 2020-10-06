@@ -63,10 +63,10 @@
 	</style>
 </head>
      <div class="admintitle" align="center" style="background-color:#8B0000; color:#fff; margin-left:50px; margin-right:50px; height:60px;">
-            <h3>
-                  <a href="Project1_Documentation.pdf" style="float:left; margin-left:30px; color:#fff">View Design Documentation</a></h3>
-                  <h3><a href="https://youtu.be/gO3loTwrXyw" style="float:right; margin-right:30px; color:#fff">Video Demo</a></h3>
-             <h1>Dr. John Snow's 1854 Cholera Epidemic Visualization </h1>
+            <h3><a href="https://youtu.be/gO3loTwrXyw/" style="float:right; margin-right:30px; color:#fff">Video Demo</a></h3>
+            <h3><a href="Project1_Documentation.pdf" style="float:right; margin-right:30px; color:#fff">View Documentation</a></h3>
+         <h1>Dr. John Snow's 1854 Cholera Epidemic Visualization </h1>
+             
         </div>
 		<svg id="map" width="49%" viewBox="0 0 600 500">
 		</svg>
@@ -74,9 +74,14 @@
 			<text id='label' x='5' y='20'>Deaths per day</text>
 		</svg>
 	</div>
+    
+    </div>
+    <div id="zoom" style="float:left; margin-left:250px; background-color:black;color:white; width:60px; height:25px;">
+      <button id="zoom_in">+</button>
+      <button id="zoom_out">-</button>
+    </div><br/><br/>
 
-	
-	<script type="text/javascript">
+		<script type="text/javascript">
 		const SIZE = 500;
 		let padding = 30;
 	
@@ -485,9 +490,7 @@
 		// Load the death data and add it to the map and the graph.
 		function loadDeaths() {
 		
-			// Load the coordinates and demographics for each death. These are
-			// assumed to be provided in the order in which the victim died, for
-			// purposes of correlating to deathdays.csv.
+			// Load the coordinates and demographics for each death.
 			d3.csv("deaths_age_sex.csv", function(data) {
 				for (let i=0; i < data.length; i++) {
 					deaths.push(
@@ -615,14 +618,7 @@
 						return 'rotate(' + d.angle + ',' +
 							d.x + ',' + d.y + ')';
 					});
-					
-				/*
-				// We used this code to estimate coordinates
-				// for all the labels.
-				map.on("click", function() {
-					console.dir(event.clientX + ", " + event.clientY);
-				});
-				*/
+	
 			});
 		}
 		
