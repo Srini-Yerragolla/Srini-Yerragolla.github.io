@@ -2,652 +2,853 @@
 <html>
 <head>
 	<meta charset="utf-8">
-	<title>Interactive Visualization-1854 Cholera Epidemi</title>
-	<link type="text/css" rel="stylesheet" href="cholera.css"/>
-	<script type="text/javascript" src="https://d3js.org/d3.v3.min.js"></script>
-	<style>
-		svg .street {
-			stroke: gray;
-			stroke-width: 1px;
-			fill: none;
-		}
-		
-		svg .mapLabel {
-			font-family: sans-serif;
-			fill: gray;
-		}
-		
-		svg .pump {
-			fill: black;
-			stroke: none;
-		}
-		
-		svg .death {
-			stroke: none;
-			r: 2;
-		}
-		
-		svg .graphline {
-			fill: none;
-			stroke-width: 1px;
-		}
-		
-		svg .deathhoverbar:hover {
-			fill-opacity: .1;
-		}
-		
-		svg .graphbutton {
-			rx: 5;
-			ry: 5;
-			stroke: none;
-		}
-		
-		svg .graphbuttonlabel {
-			font-family: 'Arial';
-			font-size: 15px;
-		}
-		
-		.axis path,
-		.axis line {
-			fill: none;
-			stroke: gray;
-			shape-rendering: crispEdges;
-		}
-
-		.axis text {
-			font-family: sans-serif;
-			font-size: 10px;
-			fill: gray;
-		}
-		
-	</style>
-</head>
-     <div class="admintitle" align="center" style="background-color:#8B0000; color:#fff; margin-left:50px; margin-right:50px; height:60px;">
-            <h3><a href="https://youtu.be/gO3loTwrXyw/" style="float:right; margin-right:30px; color:#fff">Video Demo</a></h3>
-            <h3><a href="Project1_Documentation.pdf" style="float:right; margin-right:30px; color:#fff">View Documentation</a></h3>
-         <h1>Dr. John Snow's 1854 Cholera Epidemic Visualization </h1>
-             
-        </div>
-		<svg id="map" width="49%" viewBox="0 0 600 500">
-		</svg>
-		<svg id="graph" width="49%" viewBox="0 0 600 500">
-			<text id='label' x='5' y='20'>Deaths per day</text>
-		</svg>
-	</div>
+	<!DOCTYPE html>
+    <head>
+        <title>IUPUI-H517 Project Dr John Snow's Cholera Map</title>
+        <script src="https://d3js.org/d3.v3.min.js"></script>
+     </head>
     
-    </div>
-    <div id="zoom" style="float:left; margin-left:250px; background-color:black;color:white; width:60px; height:25px;">
-      <button id="zoom_in">+</button>
-      <button id="zoom_out">-</button>
-    </div><br/><br/>
+        <div class="admintitle" align="center" style="background-color:#99d8c9; color:teal; margin-left:50px; margin-right:50px; height:60px;">
+            <h3><a href="https://youtu.be/gO3loTwrXyw/" style="float:right; margin-right:30px; color:blue">Video Demo</a></h3>
+            <h3><a href="Project1_Documentation.pdf" style="float:right; margin-right:30px; color:blue">View Documentation</a></h3>
+         <h1>Dr. John Snow's 1854 Cholera Epidemic Visualization </h1>
+        </div>
+        <style>
+              text {
+                    font-family: "Lato", "Open Sans", "sans-serif";
+                    font-size: 15px;
+                    margin-top: 20px;
+                    margin-bottom: 0px;
+                    border: 0px;
+                    padding: 0px;
+                    }
 
-		<script type="text/javascript">
-		const SIZE = 500;
-		let padding = 30;
-	
-		let map = d3.select("svg#map");
-		let mapWidth = SIZE;
-		let mapHeight = SIZE;
-		let mapXScale = d3.scale.linear();
-		let mapYScale = d3.scale.linear();
-		
-		let buttonHeight = 30;
-		let buttonPadding = 10;
-		
-		let graph = d3.select("svg#graph");
-		let graphWidth = SIZE;
-		let graphHeight = SIZE - 
-			(buttonHeight + buttonPadding * 2);
-		let graphXScale = d3.scale.linear();
-		let graphYScale = d3.scale.linear();
-		
-		let buttonWidth = (graphWidth - 4 * buttonPadding) / 3;
-		let keyButtonWidth = buttonWidth / 2;
-	
-		let maleOpacity = 1;
-		let famaleOpacity = 1;
-		
-		let ageRanges = [
-			{
-				label: '0-10',
-				opacity: 1,
-				color: '#17FF17'
-			},
-			{
-				label: '11-20',
-				opacity: 1,
-				color: '#00E800'
-			},
-			{
-				label: '21-40',
-				opacity: 1,
-				color: '#00BA00'
-			},
-			{
-				label: '41-60',
-				opacity: 1,
-				color: '#008C00'
-			},
-			{
-				label: '61-80',
-				opacity: 1,
-				color: '#005D00'
-			},
-			{
-				label: '> 80',
-				opacity: 1,
-				color: '#002F00'
-			}
-		];
-		
-		let streets = [];
-		let mapLabels = [];
-		let pumps = [];
-		
-		let deathDays = [];
-		let deaths = [];
-		let maxDeaths = 0;
-		
-		function resetElements() {
-			map.selectAll('.death')
-				.attr('fill','none')
-				.attr('fill-opacity', 1);
-				
-			graph.selectAll('.graphline')
-				.attr('stroke','none')
-				.attr('stroke-opacity',1);
-				
-			graph.selectAll('.graphkeybutton')
-				.attr('visibility','hidden')
-				.attr('fill-opacity', 1);
-				
-			maleOpacity = 1;
-			femaleOpacity = 1;
-			
-			for (let i=0; i < ageRanges.length; i++) {
-				ageRanges[i].opacity = 1;
-			}
-		}
-		
-		function displayTotal() {
-			resetElements();
-			
-			map.selectAll('.death').attr('fill','orangered');
-				
-			graph.select('#graphlinetotal')
-				.attr('stroke','orangered')
-				.attr('opacity','1');
-		}
-		
-		function displayGender() {
-			resetElements();
-			
-			map.selectAll('.male').attr('fill','blue');
-			map.selectAll('.female').attr('fill','magenta');
-			
-			graph.select('#graphlinegendermale').attr('stroke','blue');
-			graph.select('#graphlinegenderfemale').attr('stroke','magenta');
-			
-			graph.select('#buttongendermale').attr('visibility','visible');
-			graph.select('#buttongendermalelabel').attr('visibility','visible');
-			graph.select('#buttongenderfemale').attr('visibility','visible');
-			graph.select('#buttongenderfemalelabel').attr('visibility','visible');
-		}
-		
-		function displayAge() {
-			resetElements();
-			
-			for (let i=0; i < ageRanges.length; i++) {
-				map.selectAll('.age' + i)
-					.attr('fill', ageRanges[i].color);
-				graph.select('#graphlineage' + i)
-					.attr('stroke', ageRanges[i].color);
-				graph.select('#buttonage' + i)
-					.attr('visibility','visible');
-				graph.select('#buttonagelabel' + i)
-					.attr('visibility','visible');
-			}
-		}
-		
-		// Draw the location of each death on the map.
-		function drawDeathsMap() {
-			map.selectAll('.death')
-				.data(deaths)
-				.enter()
-				.append('circle')
-				.attr('id', function(d,i) { return "death" + i; })
-				.attr('class', function(d) {
-					return "death " +
-						d.gender + " " +
-						"age" + d.age + " " +
-						"deathday" + d.deathday;
-				})
-				.attr('cx', function(d) { return mapXScale(d.x); })
-				.attr('cy', function(d) { return mapYScale(d.y); })
-				.attr('fill','none')
-				.append("title")
-				.text(function(d) {
-					return d.gender + "\r\n" +
-						"age " + ageRanges[d.age].label + "\r\n" +
-						"died " + d.deathdate;
-				});
-		}
-		
-		// Draw all the graph lines in advance.
-		function drawDeathsGraphLines() {
-			let graphTotalPathGenerator = d3.svg.line()
-				.x(function(d) { return graphXScale(d.day); })
-				.y(function(d) { return graphYScale(d.total); });
+            .value {
+            font-size: 7px;
+            }
 
-			graph.append('path')
-				.attr('id', 'graphlinetotal')
-				.attr('class', 'graphline')
-				.attr('d', graphTotalPathGenerator(deathDays));
-				
-			let graphMalePathGenerator = d3.svg.line()
-				.x(function(d) { return graphXScale(d.day); })
-				.y(function(d) { return graphYScale(d.male); });
+            .axis path,
+            .axis line {
+              fill: none;
+              stroke: #000;
+              shape-rendering: crispEdges;
+            }
 
-			graph.append('path')
-				.attr('id', 'graphlinegendermale')
-				.attr('class', 'graphline male')
-				.attr('d', graphMalePathGenerator(deathDays));
+            .y.axis line,
+            .y.axis path {
+               fill: none;
+               stroke: #17BED5;
+               stroke-width: 1.0;
+            }
 
-			let graphFemalePathGenerator = d3.svg.line()
-				.x(function(d) { return graphXScale(d.day); })
-				.y(function(d) { return graphYScale(d.female); });
+            .y.axis .minor{
+           stroke: #52D12A;
+           stroke-width: 1.5;
+           stroke-opacity: 0.5;
+            }
 
-			graph.append('path')
-				.attr('id', 'graphlinegenderfemale')
-				.attr('class', 'graphline female')
-				.attr('d', graphFemalePathGenerator(deathDays));
+            path{
+            stroke: black;
+            fill: none;
+            stroke-width: 1;
+            }
+            
+            div.tooltip {
+                position: absolute;
+                text-align: center;
+                width: 120px;
+                height: 20px;
+                padding: 2px;
+                font: 12px sans-serif;
+                font-weight: bold;
+                background: lightgrey;
+                border: 0px;
+                border-radius: 8px;
+                pointer-events: none;
+            }                       
+                        
+            #tooltip-container{
+                  background: #eee;
+                  box-shadow: 0 0 5px #999999;
+                  color: #333;
+                  display: none;
+                  font-size: 12px;      
+                  padding: 10px;
+                  position: absolute;
+                  text-align: center;
+                  right: 200px;
+                  top: 300px;
+                  width: 140px;
+                  height: 230px;
+                  z-index: 10;
+                }            
+                   
+        </style>   
+        </head>
 
-			for (let i=0; i < ageRanges.length; i++) {
-				let graphPathGenerator = d3.svg.line()
-					.x(function(d) { return graphXScale(d.day); })
-					.y(function(d) { return graphYScale(d.age[i]); });
+  <body>
+       <div style = "width: 1060">
+            <!-- SVG group for death -->
+            <svg id = "main" width = "1060" height = "800">
 
-				graph.append('path')
-					.attr('id', 'graphlineage' + i)
-					.attr('class', 'graphline age' + i)
-					.attr('d', graphPathGenerator(deathDays));
-			}
-		}
-		
-		// Draw the overall structure of the graph.
-		function drawDeathsGraph() {
+             <!-- group with id = "gmap" to be referenced in d3 script tag for map  -->
+                
+               <g id ="line">
+                   <path id = "mPath" transform="translate(2,20)"/>
 
-			// Create hover bars
-			let hoverbarWidth = graphWidth / (deathDays.length - 1);
+                    <circle id= "pumps" transform="translate(2,20)"/>
+                    
+               </g>
 
-			graph.selectAll("rect.deathhoverbar")
-				.data(deathDays)
-				.enter()
-				.append("rect")
-				.attr("x", function(d, i) {
-					return graphXScale(i) - hoverbarWidth / 2;
-				})
-				.attr("y", padding)
-				.attr('width', hoverbarWidth)
-				.attr("height", graphHeight - padding * 2)
-				.attr("fill", "black")
-				.attr("fill-opacity", "0")
-				.attr("stroke", "none")
-				.attr("stroke-width", "0")
-				.attr("id", function(d) { return d.deathdate; })
-				.attr("class", "deathhoverbar")
-				.on("mouseover", function(d) {
-					d3.selectAll('.death')
-						.filter(function(d2) {
-							return d2.deathday > d.day;
-						})
-						.attr('visibility','hidden');
-				})
-				.on("mouseout", function(d) {
-					map.selectAll(".death").attr("visibility","visible");
-				})
-				.append("title")
-				.text(function(d) {
-					return d.deathdate + ": " + d.total + 
-						(d.total==1 ? " death" : " deaths");
-				});
-				
-			// Draw the axes.
-			let xAxis = d3.svg.axis()
-				.scale(graphXScale)
-				.orient('bottom')
-				.tickFormat(function(d) {
-					return deathDays[d].deathdate;
-				});
+                <g id= 'barchart' transform="translate(680,20)">
+                    <text> Number of Death by Day</text>
+                </g>
+                <g id= 'barAge' transform="translate(690,230)">
+                    <text> Number of Death by Age Group</text>
+                </g>
+                <g id= 'barGender' transform="translate(690,367)">
+                    <text> Number of Death by Gender</text>
+                </g>
 
-			let yAxis = d3.svg.axis()
-				.scale(graphYScale)
-				.orient('left');
+           </svg>
 
-			graph.append('g')
-				.attr('class', 'axis')
-				.attr('transform', 'translate(0,' + (graphHeight - padding) + ')')
-				.call(xAxis);
+        </div>
 
-			graph.append('g')
-				.attr('class', 'axis')
-				.attr('transform', 'translate(' + padding + ',0)')
-				.call(yAxis);
-				
-			// Draw the buttons.
-			let buttonLabelYAdjust = 5;
-			
-			// Total Deaths
-			graph.append('rect')
-				.attr('id', 'buttontotal')
-				.attr('class', 'graphbutton')
-				.attr("x", buttonPadding)
-				.attr("y", graphHeight + buttonPadding)
-				.attr("width", buttonWidth)
-				.attr("height", buttonHeight)
-				.attr("fill", "orangered")
-				.on('click', function(d) {
-					displayTotal();
-				});
-			graph.append('text')
-				.attr('id', 'buttontotallabel')
-				.attr('class', 'graphbuttonlabel')
-				.text('Total')
-				.attr('x', buttonPadding + buttonWidth / 2)
-				.attr('y', graphHeight + buttonPadding + buttonHeight / 2 + 
-					buttonLabelYAdjust)
-				.attr('text-anchor','middle')
-				.attr('fill', 'white')
-				.style('pointer-events','none');
-				
-			// By Gender
-			graph.append('rect')
-				.attr('id', 'buttongender')
-				.attr('class', 'graphbutton')
-				.attr("x", buttonPadding * 2 + buttonWidth)
-				.attr("y", graphHeight + buttonPadding)
-				.attr("width", buttonWidth)
-				.attr("height", buttonHeight)
-				.attr("fill", "blue")
-				.on('click', function(d) {
-					displayGender();
-				});
-			graph.append('text')
-				.attr('id', 'buttongenderlabel')
-				.attr('class', 'graphbuttonlabel')
-				.text('By Gender')
-				.attr('x', buttonPadding * 2 + buttonWidth * 1.5)
-				.attr('y', graphHeight + buttonPadding + buttonHeight / 2 + 
-					buttonLabelYAdjust)
-				.attr('text-anchor','middle')
-				.attr('fill', 'white')
-				.style('pointer-events','none');
-				
-			// By Age
-			graph.append('rect')
-				.attr('id', 'buttonage')
-				.attr('class', 'graphbutton')
-				.attr("x", buttonPadding * 3 + buttonWidth * 2)
-				.attr("y", graphHeight + buttonPadding)
-				.attr("width", buttonWidth)
-				.attr("height", buttonHeight)
-				.attr("fill", "green")
-				.on('click', function(d) {
-					displayAge();
-				});
-			graph.append('text')
-				.attr('id', 'buttonagelabel')
-				.attr('class', 'graphbuttonlabel')
-				.text('By Age')
-				.attr('x', buttonPadding * 3 + buttonWidth * 2.5)
-				.attr('y', graphHeight + buttonPadding + buttonHeight / 2 + 
-					buttonLabelYAdjust)
-				.attr('text-anchor','middle')
-				.attr('fill', 'white')
-				.style('pointer-events','none');
-				
-			// By Gender: Male Key
-			graph.append('rect')
-				.attr('id', 'buttongendermale')
-				.attr('class', 'graphbutton graphkeybutton male')
-				.attr("x", graphWidth - (keyButtonWidth + buttonPadding))
-				.attr("y", buttonPadding)
-				.attr("width", keyButtonWidth)
-				.attr("height", buttonHeight)
-				.attr("fill", "blue")
-				.on('click', function(d) {
-					maleOpacity = (maleOpacity == 1 ? .2 : 1);
-					d3.selectAll('.male').attr('fill-opacity', maleOpacity);
-					d3.selectAll('.male').attr('stroke-opacity', maleOpacity);
-				});
-			graph.append('text')
-				.attr('id', 'buttongendermalelabel')
-				.attr('class', 'graphbuttonlabel graphkeybutton')
-				.text('Male')
-				.attr('x', graphWidth - (keyButtonWidth / 2 + buttonPadding))
-				.attr('y', buttonPadding + buttonHeight / 2 + 
-					buttonLabelYAdjust)
-				.attr('text-anchor','middle')
-				.attr('fill', 'white')
-				.style('pointer-events','none');
-				
-			// By Gender: Female Key
-			graph.append('rect')
-				.attr('id', 'buttongenderfemale')
-				.attr('class', 'graphbutton graphkeybutton female')
-				.attr("x", graphWidth - (keyButtonWidth + buttonPadding))
-				.attr("y", buttonPadding * 2 + buttonHeight)
-				.attr("width", keyButtonWidth)
-				.attr("height", buttonHeight)
-				.attr("fill", "magenta")
-				.on('click', function(d) {
-					femaleOpacity = (femaleOpacity == 1 ? .2 : 1);
-					d3.selectAll('.female').attr('fill-opacity', femaleOpacity);
-					d3.selectAll('.female').attr('stroke-opacity', femaleOpacity);
-				});
-			graph.append('text')
-				.attr('id', 'buttongenderfemalelabel')
-				.attr('class', 'graphbuttonlabel graphkeybutton')
-				.text('Female')
-				.attr('x', graphWidth - (keyButtonWidth / 2 + buttonPadding))
-				.attr('y', buttonPadding * 2 + buttonHeight * 1.5 + 
-					buttonLabelYAdjust)
-				.attr('text-anchor','middle')
-				.attr('fill', 'white')
-				.style('pointer-events','none');
+        <div id = "tooltip-container"></div>
 
-			// By Age Key Buttons
-			for (let i=0; i < ageRanges.length; i++) {
-				graph.append('rect')
-					.attr('id', 'buttonage' + i)
-					.attr('class', 'graphbutton graphkeybutton age' + i)
-					.attr("x", graphWidth - (keyButtonWidth + buttonPadding))
-					.attr("y", buttonPadding * (i + 1) + buttonHeight * i)
-					.attr("width", keyButtonWidth)
-					.attr("height", buttonHeight)
-					.attr("fill", ageRanges[i].color)
-					.on('click', function(d) {
-						ageRanges[i].opacity = (ageRanges[i].opacity == 1 ? .1 : 1);
-						d3.selectAll('.age' + i)
-							.attr('fill-opacity', ageRanges[i].opacity);
-						d3.selectAll('.age' + i)
-							.attr('stroke-opacity', ageRanges[i].opacity);
-					});
-				graph.append('text')
-					.attr('id', 'buttonagelabel' + i)
-					.attr('class', 'graphbuttonlabel graphkeybutton')
-					.text(ageRanges[i].label)
-					.attr('x', graphWidth - (keyButtonWidth / 2 + buttonPadding))
-					.attr('y', buttonPadding * (i + 1) +
-						buttonHeight * i + buttonHeight / 2 +
-						buttonLabelYAdjust)
-					.attr('text-anchor','middle')
-					.attr('fill', 'white')
-					.style('pointer-events','none');
-			}
-		}		
-		
-		// Load the death data and add it to the map and the graph.
-		function loadDeaths() {
-		
-			// Load the coordinates and demographics for each death.
-			d3.csv("deaths_age_sex.csv", function(data) {
-				for (let i=0; i < data.length; i++) {
-					deaths.push(
-						{
-							x: data[i].x,
-							y: data[i].y,
-							age: +data[i].age,
-							gender: +data[i].gender==1 ? "female" : "male"
-						}
-					);
-				}
-				
-				// Load the number of deaths for each date, and update
-				// each death record with the day and date on which it occurred.
-				d3.csv("deathdays.csv", function(data) {
-					let deathId = 0;
-					for (let day = 0; day < data.length; day++) {
-					
-						let totalCount = +data[day].deaths;
-						let maleCount = 0;
-						let femaleCount = 0;
-						let ageCount = [0,0,0,0,0,0];
-						
-						// Find the highest number of deaths on any day,
-						// to set the vertical scale.
-						if (maxDeaths < totalCount) {
-							maxDeaths = totalCount;
-						}
-						
-						for (let i=0; i < totalCount; i++) {
-							// Update the individual death records with the day
-							// and date of death.
-							deaths[deathId].deathday = day;
-							deaths[deathId].deathdate = data[day].date;
-							
-							// Count the deaths on each deathDay by demographic.
-							if (deaths[deathId].gender == "male") {
-								maleCount++;
-							} else {
-								femaleCount++;
-							}
-							ageCount[deaths[deathId].age]++;
-							
-							// Increment to the next individual death record.
-							deathId++;
-						}
-						
-						deathDays.push ({
-							day: day,
-							deathdate: data[day].date,
-							total: totalCount,
-							male: maleCount,
-							female: femaleCount,
-							age: ageCount
-						});
-						
-					}
+    <script>
+        
+     // Variable diclaration
+        var padding = 1;
+        var workhouse, brewery, work, brew, group_streets,svgMap, svg2, svg3, g2, g3, mContainer, gContainer2, gContainer3, line, group_pumps ;
+        var x, y, xScale, yScale, xAxis, yAxis, bar_xScale, bar_yScale, bar_hScale, legends;
+   
+       
+         // Dimensions of the Cholera map
+        var svgMap = d3.select("svg"),
+            margin = {top: 20, right: 0, bottom: 60, left: -120},
+            width = 750,
+            height = 550;
 
-					graphXScale.domain([0, deathDays.length-1])
-						.range([padding, graphWidth - padding]);
-					graphYScale.domain([0, maxDeaths])
-						.range([graphHeight - padding, padding]);
-						
-					drawDeathsMap();
-					drawDeathsGraphLines();
-					drawDeathsGraph();
-					
-					displayTotal();
-				});
-				
-			});
-		}
+        //defining variable for work location on the map
+           work = [{x:407, y:159, w:25, h:20, rotate: -25}]
 
-		// Load and draw the water pumps.
-		function drawPumps() {
-			const pumpSize = 8;
-		
-			d3.csv("pumps.csv", function(data) {
-				for (let i=0; i < data.length; i++) {
-					pumps.push(
-						{x: data[i].x, y: data[i].y}
-					);
-				}
-				
-				map.selectAll('.pump')
-					.data(pumps)
-					.enter()
-					.append('rect')
-					.attr('class', 'pump')
-					.attr('width', pumpSize)
-					.attr('height', pumpSize)
-					.attr('x', function(d) { return mapXScale(d.x) - pumpSize / 2; })
-					.attr('y', function(d) { return mapYScale(d.y) - pumpSize / 2; })
-					.attr('transform', function(d) {
-						return 'rotate(45 ' + 
-							mapXScale(d.x) + ' ' +
-							mapYScale(d.y) + ')';
-					});
-			});
-		}
-		
-		// Load and draw the street and building labels.
-		function drawMapLabels() {
-			d3.csv("maplabels.csv", function(data) {
-				for (let i=0; i < data.length; i++) {
-					mapLabels.push({
-						x: data[i].x,
-						y: data[i].y,
-						text: data[i].text,
-						fontsize: data[i].fontsize,
-						angle: data[i].angle
-					});
-				}
-				
-				map.selectAll('.mapLabel')
-					.data(mapLabels)
-					.enter()
-					.append('text')
-					.attr('class', 'mapLabel')
-					.attr('x', function(d) { return d.x; })
-					.attr('y', function(d) { return d.y; })
-					.attr('font-size', function(d) { return d.fontsize; })
-					.text(function(d) { return d.text; })
-					.attr('transform', function(d) {
-						return 'rotate(' + d.angle + ',' +
-							d.x + ',' + d.y + ')';
-					});
-	
-			});
-		}
-		
-		// Provide a means of drawing the map lines at scale.
-		let lineFunction = d3.svg.line()
-			.x(function(d) { return mapXScale(d.x); })
-			.y(function(d) { return mapYScale(d.y); })
-			.interpolate("linear");
-		
-		// Start the process by loading and drawing the map.
-		d3.json("streets.json", function(data) {
-			streets = data;
-		
-			mapXScale.domain([3,20]).range([0, mapWidth]);
-			mapYScale.domain([3,20]).range([mapHeight, 0]);
-			
-			for (let i=0; i < streets.length; i++) {
-				map.append("path")
-					.attr("d", lineFunction(streets[i]))
-					.attr("class", "street");
-			}
-			
-			drawMapLabels();
-			drawPumps();
-			loadDeaths();
-		});
-				
-	</script>
+        //defining variable for brew location on the map
+           brew = [{x:517, y:195, w:22, h:12, rotate: 62.5}]
+
+        //deining variables for street names on the map
+        var streetNames = [{name: 'Ceorce Street', x:147, y:205, rotate:68},
+                       {name: 'Brewer Street', x:462, y:355, rotate:-32},
+                       {name: 'Regent Street', x:286, y:227, rotate:52},
+                       {name: 'Oxford Street', x:402, y:66, rotate:-10},
+                       {name: 'Dean Street', x:597, y:55, rotate:60},
+                       {name: 'work', x:411, y:165, rotate:-23},
+                       {name: 'Bar', x:513, y:199, rotate:65}]
+
+        // set the ranges for x and y axis
+        var x = d3.scale.ordinal()
+                    .rangeRoundBands([0, width], 0.1);
+
+        var y = d3.scale.linear()
+                    .range([height, 0]);
+
+        //canvas as rectangle border of the map
+            mContainer = svgMap.append("g")
+                        .attr("transform", "translate(0, 20)")
+                        .attr("width", width + margin.left + margin.right)
+                        .attr("height", height + margin.top + margin.bottom)
+                        .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+                        .style("stroke", "black")
+                        .style("fill","none")
+                        .style("stroke-width", ".5px")
+
+
+        //adding work house to the map container
+            workhouse = mContainer.append("rect")
+                            .data(work)
+                            .attr("transform", function(d){
+                                return "rotate (" +d.rotate + " " + d.x + "," + d.y + ")";
+                            })
+                            .attr("x", function(d) {
+                                return d.x;})
+                            .attr("y", function(d) {
+                                return d.y;})
+                            .attr("width", function(d) {
+                                return d.w;})
+                            .attr("height", function(d) {
+                                return d.h;})
+                            .attr("stroke", "black")
+                            .attr("stroke-opacity", 0.8)
+                            .style("fill", "gold");
+
+        //adding brewery to the map container
+            brewery = mContainer.append("rect")
+                            .data(brew)
+                            .attr("transform", function(d){
+                                return "rotate (" +d.rotate + " " + d.x + "," + d.y + ")";
+                            })
+                            .attr("x", function(d) {
+                                return d.x;})
+                            .attr("y", function(d) {
+                                return d.y;})
+                            .attr("width", function(d) {
+                                return d.w;})
+                            .attr("height", function(d) {
+                                return d.h;})
+                            .attr("stroke", "black")
+                            .attr("stroke-opacity", 0.8)
+                            .style("fill", "chocolate");
+
+        //adding street names to the map container
+        mContainer.selectAll(".place-label")
+                            .data(streetNames)
+                            .enter()
+                            .append("text")
+                            .attr("class", "place-label")
+                            .style("font-size", "8px")
+                            .style("font-weight", "normal")
+                            .style("font-family", "sans-serif")
+                            .attr("transform", function(d){
+                                return "rotate (" +d.rotate + " " + d.x + "," + d.y + ")";
+                            })
+                            .attr("x", function(d) {
+                                return d.x;})
+                            .attr("y", function(d) {
+                                return d.y;})
+                            .attr("dy", ".35em")
+                            .text(function(d) {return d.name;});
+
+
+            group_streets = mContainer.append("g")
+
+            //getting streets data
+            d3.json("streets.json",function(data){
+
+                xScale = d3.scale.linear()
+                        .domain([0,20])
+                        .range([padding, width-padding]);
+
+               yScale = d3.scale.linear()
+                        .domain([0,19])
+                        .range([height-padding, padding]);
+
+
+            //defining line variable to apply xScale and yScale to the Streets
+                line = d3.svg.line()
+                            .x(function(d) {
+                                return xScale(d.x);
+                            })
+                            .y(function(d) {
+                                return yScale(d.y);
+                            })
+                            .interpolate("linear");
+
+
+            //group streets path lines
+            group_streets.selectAll("path")
+                .data(data)
+                .enter()     //data is streets
+                .append("path")
+                .attr("d", function(d){
+                                        return line(d)
+                                    })
+
+                .attr("stroke", "black")
+                .attr("stroke-width" , 2)
+                .attr("fill", "none");
+
+            });
+        //add pumps on map 
+        var padding = 1;
+         // set the dimensions of the Cholera map
+            svgMap = d3.select("svg"),
+            margin = {top: 20, right: 0, bottom: 60, left: -120},
+            width = 750,
+            height = 550;
+
+
+        // set the ranges for x and y axis
+           x = d3.scale.ordinal()
+                    .rangeRoundBands([0, width], 0.1);
+
+           y = d3.scale.linear()
+                    .range([height, 0]);
+
+        //canvas as rectangle border of the map
+            mContainer = svgMap.append("g")
+                        .attr("transform", "translate(0, 20)")
+                        .attr("width", width + margin.left + margin.right)
+                        .attr("height", height + margin.top + margin.bottom)
+                        .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+                        .style("stroke", "black")
+                        .style("fill","none")
+                        .style("stroke-width", "2px")
+
+            group_pumps = mContainer.append("g")
+         
+         // Get pumps location data from CSV file
+            d3.csv("pumps.csv", function (error, circleData) {
+                circleData.forEach(function(d) {
+                    d.x=+d.x;
+                    d.y=+d.y;
+                });
+
+        //Create scale functions
+            xScale = d3.scale.linear()
+                        .domain([0,20])
+                        .range([padding, width-padding]);
+
+            yScale = d3.scale.linear()
+                        .domain([0,19])
+                        .range([height-padding, padding]);
+
+        //group pump circles
+        var circles = group_pumps.selectAll("circle")
+                                    .data(circleData)
+                                    .enter()
+                                    .append("circle")
+                                    .attr("cx", function(d) {
+                                                             return xScale(d.x);
+                                         })
+                                     .attr("cy", function(d) {
+                                                              return yScale(d.y);
+                                         })
+                                    .attr("r", 5)
+                                    .style("stroke", "black")
+                                    .style("stroke-width", ".7px")
+                                    .style("fill", "red");
+
+            });
+
+
+     //add deaths from "deaths_age_sex.csv" on the map 
+
+        var padding = 1;
+         // set the dimensions of the Cholera map
+            svgMap = d3.select("svg"),
+            margin = {top: 20, right: 0, bottom: 60, left: -120},
+            width = 750,
+            height = 550;
+
+        // set the ranges for x and y axis
+            x = d3.scale.ordinal()
+                    .rangeRoundBands([0, width], 0.1);
+
+            y = d3.scale.linear()
+                    .range([height, 0]);
+
+        //canvas as rectangle border of the map
+            mContainer = svgMap.append("g")
+                        .attr("transform", "translate(0, 20)")
+                        .attr("width", width + margin.left + margin.right)
+                        .attr("height", height + margin.top + margin.bottom)
+                        .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+                        .style("stroke", "black")
+                        .style("fill","none")
+                        .style("stroke-width", "2px")
+
+         var group_death = mContainer.append("g")
+                 
+        // Define the div for the tooltip
+        var div = d3.select("body").append("div")   
+            .attr("class", "tooltip")               
+            .style("opacity", 0);
+
+        // Get death data from deaths_age_sex.CSV file
+        d3.csv("deaths_age_sex.csv", function (error, deathData) {
+                deathData.forEach(function(d) {
+                    d.x=+d.x;
+                    d.y=+d.y;
+                    d.age = d.age;
+                    d.sex = d.sex;
+                    d.group = d.group;
+
+                });
+
+            //Create scale functions
+            xScale = d3.scale.linear()
+                        .domain([0,20])
+                        .range([padding, width-padding]);
+
+            yScale = d3.scale.linear()
+                        .domain([0,19])
+                        .range([height-padding, padding]);
+
+            //group death circles
+        var circlesD = group_death.selectAll("circle")
+                                    .data(deathData)
+                                    .enter()
+                                    .append("circle")
+                                    .attr("class", "circle")
+                                    .attr("cx", function(d) {
+                                                             return xScale(d.x);
+                                         })
+                                     .attr("cy", function(d) {
+                                                              return yScale(d.y);
+                                        })
+                                    .attr("r", 3)
+                                    .attr("fill",function(d){
+                                          if (d.gender == 0)
+                                          {
+                                              return "mediumblue";
+                                          }
+                                          else {d.gender == 1
+                                              return "magenta";
+                                          }
+                                    })
+
+                                    .style("stroke", "black")
+                                    .style("stroke-width", ".7px")
+    
+                                    .on("mouseover", function(d) {      
+                                        div.transition()        
+                                            .duration(500)      
+                                            .style("opacity", .9);      
+                                        //div   .html("age: " +(d.age) )
+                                        
+                                        div.html(function(){
+                                            if (d.age == 0) {return "Age group: 0 - 10";}
+                                             else if (d.age == 1){
+                                                                return "Age group: 11 - 20";}
+                                                else if (d.age == 2){
+                                                                    return "Age group: 21 - 40";}
+                                                    else if (d.age == 3){
+                                                                        return  "Age group: 41 - 60";}
+                                                        else if (d.age == 4){
+                                                                            return "Age group: 61 - 80";}
+                                                        else {return "Age group:  >80"} 
+                                            })
+                                            //"age: " +(d.age) )
+                                            .style("left", (d3.event.pageX) + "px")     
+                                            .style("top", (d3.event.pageY - 10) + "px");    
+                                    })    
+
+                                    .on("mouseout", function(d) {       
+                                        div.transition()        
+                                            .duration(500)      
+                                            .style("opacity", 0);   
+                                    });
+                                      
+                                        
+         });
+        
+   //Age bar chart     
+        var BAR_WIDTH = 7;
+        var MAX_BAR_HEIGHT = 150;
+        var padding=1;
+        var dates=[];
+            bar_xScale = d3.scale.ordinal()
+                        .domain(["Aug-19", "Aug-20", "Aug-21", "Aug-22", "Aug-23",
+                                 "Aug-24", "Aug-25", "Aug-26", "Aug-27", "Aug-28",
+                                 "Aug-29", "Aug-30", "Aug-31", "Sep-01", "Sep-02",
+                                 "Sep-03", "Sep-04", "Sep-05", "Sep-06", "Sep-07",
+                                 "Sep-08", "Sep-09", "Sep-10", "Sep-11", "Sep-12",
+                                 "Sep-13", "Sep-14", "Sep-15", "Sep-16", "Sep-17",
+                                 "Sep-18", "Sep-19", "Sep-20", "Sep-21", "Sep-22",
+                                 "Sep-23", "Sep-24", "Sep-25", "Sep-26", "Sep-27",
+                                 "Sep-28", "Sep-29"," "])
+                        .rangePoints([0, 42*(BAR_WIDTH+1)]);
+
+            bar_yScale = d3.scale.linear()
+                .domain([0, 150])
+                .range([MAX_BAR_HEIGHT, 0]);
+
+            bar_hScale = d3.scale.linear()
+                .domain([0, 150])
+                .range([0, MAX_BAR_HEIGHT]);
+
+        //define x-axis
+            xAxis = d3.svg.axis()
+                        .scale(bar_xScale)
+                        .orient("bottom")
+
+        //define y-axis
+            yAxis = d3.svg.axis()
+                        .scale(bar_yScale)
+                        .orient("left")
+                        .ticks(5);
+
+        //create x-axis
+        svgMap.append("g")
+                    .attr("class", "x axis")
+                    .attr("transform", "translate(680,170)")
+                    .call(xAxis)
+                    .selectAll("text")
+                    .style("font-size", "7px")
+                    .attr("y", 5)
+                    .attr("x", -25)
+                    .attr("dx", ".1em")
+                    .attr("dy", ".35em")
+                    .attr("transform", "translate(0,0),rotate(-90)")
+                    .style("text-anchor","start");
+
+        //define y-axis
+        svgMap.append("g")
+                    .attr("class", "axis")
+                    .attr("transform", "translate(680,21)")
+                    .call(yAxis)
+                    .selectAll("text")
+                    .style("font-size", "8px");
+
+        //text label for x-axis
+        svgMap.append("text")
+                    .attr("transform", "translate(825,205)")
+                    .style("text-anchor" , "left")
+                    .style("font-size", "10px")
+                    .text("Day");
+
+        //text label for y-axis
+        svgMap.append("text")
+                    .attr("transform", "translate(640,100),rotate(-90)")
+                    .attr("dy", "1em")
+                    .style("text-anchor" , "middle")
+                    .style("font-size", "10px")
+                    .text("Number of Death");
+
+        //define bar chart
+        var deathDate = [];
+
+        function drawBarChart()
+        {
+            var maxValue = d3.max(deathDate);
+
+            svgMap.select("#barchart")
+                .selectAll('rect')
+                .data(deathDate)
+                .enter()
+                .append("rect")
+                .attr("fill","blue")
+                .attr('height',function(d){return bar_hScale(d[0]);})
+                .attr('width', function(d){return BAR_WIDTH;})
+                .attr("x", function(d,i){return i*(BAR_WIDTH+1);})
+                .attr("y", function(d){return bar_yScale(d[0]);})
+
+                .on("mouseover", function(data){ //added data in function() to refer to the bar
+                                        d3.select(this)
+                                                .transition()
+                                                .duration(500)
+                                                .attr("fill", "orange")
+
+                                        group_death.selectAll("circle")
+                                                    .transition()
+                                                    .duration(500)
+                                                    .filter(function(circle){
+                                                        return circle.group != data[1];
+                                        })
+                                        .attr("opacity", .05)
+                                        .attr("r", 3)
+                                        .style("stroke", "black")
+                                        .style("stroke-width", ".7px")
+                })
+                .on("mouseout", function(){
+                                          d3.select(this)
+                                                .transition()
+                                                .duration(500)
+                                                .attr("fill", "blue")
+                                                group_death.selectAll("circle")
+                                                           .transition()
+                                                           .duration(500)
+                                                           .attr("r", 3)
+                                                           .style("stroke", "black")
+                                                           .style("stroke-width", ".7px")
+                                                           .attr("opacity", 1)
+                });
+
+        };
+
+        var parseDate=d3.time.format("%e-%b").parse;
+        var formatDate=d3.time.format("%b %d");
+
+        d3.csv('deathdays.csv', function(data)
+               {data.forEach(function(d){
+                d.deaths=+d.deaths;
+                d.date=formatDate(parseDate(d.date));
+                deathDate.push([d.deaths, d.group, d.date]);
+                dates.push(d.date);
+            });
+
+            drawBarChart()
+
+        });
+
+                svg2 = d3.select("svg"),
+                margin = {top: 30, right: 10, bottom: 10, left: 2},
+                dwidth = 300,
+                dheight = 120;
+            // set the ranges for x and y axis
+                x = d3.scale.ordinal()
+                  .rangeRoundBands([0, dwidth], 0.1);
+
+                y = d3.scale.linear()
+                  .range([dheight, 0]);
+
+                gContainer2 = svg2.append("g")
+                    .attr("transform", "translate(680, 200)");
+
+               g2 = gContainer2.append("g")
+
+                .attr("width", dwidth - margin.left)
+                .attr("height", dheight - margin.top)
+                .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+             //creat a new array and initilize with number of groups
+            var ageHistogram = [0, 0, 0, 0, 0, 0];
+
+            // get the data
+            d3.csv("deaths_age_sex.csv", function(error, data) {
+                if (error) throw error;
+
+                // format the data
+                data.forEach(function(d) {
+                    d.ageCount = +d.age;
+                    ageHistogram[+d.age]++;
+
+                });
+
+                // Scale the range of the data in the domains
+                x.domain([0,1,2,3,4,5]);
+                y.domain([0, d3.max(ageHistogram, function(d) { return d; })]); 
+
+                // append the rectangles for the bar chart
+               g2.selectAll(".bar")
+                    .data(ageHistogram)
+                    .enter()
+                    .append("rect")
+                    .attr("class", "bar")
+                    .attr("fill","purple")
+
+                    .attr("x", function(d,i) {
+                                            return x(i); })
+                    .attr("width", x.rangeBand())
+                    .attr("y", function(d) {
+                                            return y(d); })
+                    .attr("height", function(d) {
+                                                return dheight - y(d); });
+
+               var ticks = [0,1,2,3,4,5];
+               var tickLabels = ["0 - 10","11 - 20", "21 - 40", "41 - 60", "61 - 80", "> 80"]
+
+                // add the x Axis
+               g2.append("g")
+                    .attr("class", "axis")
+                    .attr("transform", "translate(0," + dheight + ")")
+                    .call(d3.svg.axis()
+                    .scale(x).orient("bottom")
+                    .ticks(10)
+                    .tickValues(ticks)
+                    .tickFormat(function(d,i){return tickLabels[i]}))
+                    .selectAll("text")
+                    .style("font-size", "8px")
+                    ;
+
+                //text label for x-axis
+                g2.append("text")
+                    .attr("y", 125 - margin.left)
+                    .attr("x", 375 - dwidth)
+                    .style("text-anchor" , "middle")
+                    .style("font-size", "10px")
+                    .text("Age Group");
+
+                // add the y Axis
+                g2.append("g")
+                    .attr("class", "axis")
+                    .call(d3.svg.axis()
+                    .scale(y).orient("left")
+                    .ticks(10))
+                    .selectAll("text")
+                    .style("font-size","8px")
+                    .style("text-anchor", "left");
+
+                //text label for y-axis
+                g2.append("text")
+                    .attr("transform", "rotate(-90)")
+                    .attr("y", -35 - margin.left)
+                    .attr("x", 0 - (dheight / 2))
+                    .attr("dy", "1em")
+                    .style("text-anchor" , "middle")
+                    .style("font-size", "10px")
+                    .text("Number of Death");
+
+        });
+
+            svg3 = d3.select("svg"),
+                margin = {top: 10, right: 10, bottom: 10, left: 5},
+
+                dwidth = 250,
+                dheight = 95;
+
+
+            // set the ranges for x and y axis
+                x = d3.scale.ordinal()
+                    .rangeRoundBands([0, dwidth], 0.1);
+
+                y = d3.scale.linear()
+                    .range([dheight, 0]);
+
+                gContainer3 = svg3.append("g")
+                    .attr("transform", "translate(680, 365)");
+
+                g3 = gContainer3.append("g")
+
+                .attr("width", dwidth - margin.left)
+                .attr("height", dheight - margin.top)
+
+                .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+            //creat a new array and initilize with number of groups
+            var genderHistogram = [0, 0];
+
+            // get the data
+            d3.csv("deaths_age_sex.csv", function(error, data) {
+                if (error) throw error;
+
+                // format the data
+            data.forEach(function(d) {
+                d.genderCount = +d.gender;
+                genderHistogram[+d.gender]++; 
+
+                });
+
+                // Scale the range of the data in the domains
+                x.domain([0,1]);
+                y.domain([0, d3.max(genderHistogram, function(d) { return d; })]); 
+
+                // append the rectangles for the bar chart
+               g3.selectAll("rect")
+                    .data(genderHistogram) 
+                    .enter()
+                    .append("rect")
+                    .attr("class", "bar")
+                    .attr("fill",function(d, i){
+                                          if (i == 0)
+                                          {
+                                              return "mediumblue";
+                                          }
+                                          else{
+                                              return "magenta";
+                                          }
+                    })
+                                   .attr("x", function(d,i) {
+                                            return x(i); })
+                    .attr("width", x.rangeBand())
+                    .attr("y", function(d) {
+                                            return y(d); })
+                    .attr("height", function(d) {
+                                                return dheight - y(d); });
+
+               var ticks = [0,1];
+               var tickLabels = ["Male","Female"]
+
+                // add the x Axis
+               g3.append("g")
+                    .attr("class", "axis")
+                    .attr("transform", "translate(0," + dheight + ")")
+                    .call(d3.svg.axis()
+
+                    .scale(x).orient("bottom")
+                    .tickValues(ticks)
+                    .tickFormat(function(d,i){return tickLabels[i]}))
+                                    .selectAll("text")
+                    .style("font-size", "8px");
+
+                //text label for x-axis
+                g3.append("text")
+                    .attr("y", 120 - margin.left)
+                    .attr("x", 375 - dwidth)
+                    .style("text-anchor" , "middle")
+                    .style("font-size", "10px")
+                    .text("Gender");
+
+                // add the y Axis
+                g3.append("g")
+                    .attr("class", "axis")
+                    .call(d3.svg.axis()
+                    .scale(y).orient("left")
+                    .ticks(10))
+                    .selectAll("text")
+                .style("font-size", "8px")
+                    .style("text-anchor", "left");
+
+                //text label for y-axis
+                g3.append("text")
+                    .attr("transform", "rotate(-90)")
+                    .attr("y", -37 - margin.left)
+                    .attr("x", -5 - (dheight / 2))
+                    .attr("dy", "1em")
+                    .style("text-anchor" , "middle")
+                    .style("font-size", "10px")
+                    .text("Number of Death");
+
+                // control the text labels at the top of each bar
+               g3.selectAll("text.labels")
+                    .data(genderHistogram)  //from the age histogram variable
+                    .enter()
+                    .append("text")
+                    .attr("x", function(d,i) {
+                                            return x(i); })
+                    .attr("y", function(d) {
+                                            return y(d); })
+                    .attr("class", "label")
+                    //.attr("dy", ".75em")
+                    .attr("dy", "1.5em")
+                    .attr("dx", "3em")
+                    .attr("fill", "black")
+                    //.style("text-anchor" , "right")
+                    .style("font-size", "11px")
+                    .style("font-weight","bold")
+                    .html(function(d) {
+                                            return d; });
+
+        });
+
+        //add lengend on the map for gender and pump
+        legends = d3.select("#main")
+        
+       svgMap.append("circle")
+           .attr("cx",500)
+           .attr("cy",8)
+           .attr("r", 3)
+           .style("fill", "magenta")
+           .style("stroke", "black")
+           .style("stroke-width", ".7px")
+        svgMap.append("text")
+           .attr("x", 503)
+           .attr("y", 12)
+           .text("Female")
+           .style("font-size", "12px")
+           .style("font-weight", "bold")
+           .attr("alignment-baseline","middle")
+        
+       svgMap.append("circle")
+           .attr("cx",500)
+           .attr("cy",25)
+           .attr("r", 3)
+           .style("fill", "mediumblue")
+           .style("stroke", "black")
+           .style("stroke-width", ".7px")
+       svgMap.append("text")
+           .attr("x", 503)
+           .attr("y", 25)
+           .text("Male")
+           .style("font-size", "12px")
+           .style("font-weight", "bold")
+           .attr("alignment-baseline","middle")     
+        
+       svgMap.append("circle")
+           .attr("cx",564)
+           .attr("cy",15)
+           .attr("r", 5)
+           .style("fill", "red")
+           .style("stroke", "black")
+           .style("stroke-width", ".7px")
+       svgMap.append("text")
+           .attr("x", 569)
+           .attr("y", 17)
+           .text("Pump")
+           .style("font-size", "12px")
+           .style("font-weight", "bold")
+           .attr("alignment-baseline","middle")
+
+   </script>
 </body>
-
-
 </html>
