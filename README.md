@@ -1,6 +1,6 @@
 # srini.github.io
 This is my first project for my H517 Data Visualization class at IUPUI. 
-Please see the visualization here: https://github.com/Srini-Yerragolla/srini.github.io
+Please see the visualization here: https://srini-yerragolla.github.io/
 
 Introduction
 In 1854, a cholera outbreak swept over the Soho district in London. The outbreak reached its peak on the first week with more than 150 deaths, causing widespread panic in the neighborhood which lead to the flight of its residents. At that time, the cause of cholera was not scientifically established, and people believed that toxic vapors resulting from the decay of organic matters was the cause of cholera, among other diseases. Dr. John Snow (1813 - 1858) was skeptical of this theory. To investigate other causes, Snow made his famous map of the Soho district, plotting the location of deaths alongside street water pumps in the neighborhood. At that time, the data acquisition and visualization tools at Snow's disposal were severely limited by today’s standards. Nevertheless, Snow's visualization was arguably the first clear evidence that linked cholera transmission to contaminated water supply.
