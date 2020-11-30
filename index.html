@@ -91,7 +91,7 @@
             <!-- SVG group for death -->
             <svg id = "main" width = "1060" height = "800">
 
-             <!-- group with id = "gmap" to be referenced in d3 script tag for map  -->
+             <!-- group with id = "gmap" to be referenced in this script tag for map  -->
                 
                <g id ="line">
                    <path id = "mPath" transform="translate(2,20)"/>
@@ -120,12 +120,12 @@
         
      // Variable diclaration
         var padding = 1;
-        var workhouse, brewery, work, brew, group_streets,svgMap, svg2, svg3, g2, g3, mContainer, gContainer2, gContainer3, line, group_pumps ;
+        var workhouse, brewery, work, brew, group_streets,svgMap, svg2, svg3, g2, g3, mContainer, gContainer2, gContainer3, line, group_pumps, streetNames, group_death, div ;
         var x, y, xScale, yScale, xAxis, yAxis, bar_xScale, bar_yScale, bar_hScale, legends;
-   
+        var deathDate = [];
        
          // Dimensions of the Cholera map
-        var svgMap = d3.select("svg"),
+            svgMap = d3.select("svg"),
             margin = {top: 20, right: 0, bottom: 60, left: -120},
             width = 750,
             height = 550;
@@ -137,7 +137,7 @@
            brew = [{x:517, y:195, w:22, h:12, rotate: 62.5}]
 
         //deining variables for street names on the map
-        var streetNames = [{name: 'Ceorce Street', x:147, y:205, rotate:68},
+            streetNames = [{name: 'Ceorce Street', x:147, y:205, rotate:68},
                        {name: 'Brewer Street', x:462, y:355, rotate:-32},
                        {name: 'Regent Street', x:286, y:227, rotate:52},
                        {name: 'Oxford Street', x:402, y:66, rotate:-10},
@@ -146,10 +146,10 @@
                        {name: 'Bar', x:513, y:199, rotate:65}]
 
         // set the ranges for x and y axis
-        var x = d3.scale.ordinal()
+            x = d3.scale.ordinal()
                     .rangeRoundBands([0, width], 0.1);
 
-        var y = d3.scale.linear()
+            y = d3.scale.linear()
                     .range([height, 0]);
 
         //canvas as rectangle border of the map
@@ -259,7 +259,7 @@
 
             });
         //add pumps on map 
-        var padding = 1;
+        var  padding = 1;
          // set the dimensions of the Cholera map
             svgMap = d3.select("svg"),
             margin = {top: 20, right: 0, bottom: 60, left: -120},
@@ -347,10 +347,10 @@
                         .style("fill","none")
                         .style("stroke-width", "2px")
 
-         var group_death = mContainer.append("g")
+            group_death = mContainer.append("g")
                  
         // Define the div for the tooltip
-        var div = d3.select("body").append("div")   
+           div = d3.select("body").append("div")   
             .attr("class", "tooltip")               
             .style("opacity", 0);
 
@@ -506,8 +506,7 @@
                     .text("Number of Death");
 
         //define bar chart
-        var deathDate = [];
-
+        
         function drawBarChart()
         {
             var maxValue = d3.max(deathDate);
@@ -580,7 +579,7 @@
                   .rangeRoundBands([0, dwidth], 0.1);
 
                 y = d3.scale.linear()
-                  .range([dheight, 0]);
+                  .range([dheight, 0]);   
 
                 gContainer2 = svg2.append("g")
                     .attr("transform", "translate(680, 200)");
@@ -638,9 +637,8 @@
                     .tickValues(ticks)
                     .tickFormat(function(d,i){return tickLabels[i]}))
                     .selectAll("text")
-                    .style("font-size", "8px")
-                    ;
-
+                    .style("font-size", "8px");
+                      
                 //text label for x-axis
                 g2.append("text")
                     .attr("y", 125 - margin.left)
@@ -657,7 +655,8 @@
                     .ticks(10))
                     .selectAll("text")
                     .style("font-size","8px")
-                    .style("text-anchor", "left");
+                    .style("text-anchor", "left")
+                    .select(".domain", ".tick line").remove();
 
                 //text label for y-axis
                 g2.append("text")
@@ -789,11 +788,9 @@
                     .attr("y", function(d) {
                                             return y(d); })
                     .attr("class", "label")
-                    //.attr("dy", ".75em")
                     .attr("dy", "1.5em")
                     .attr("dx", "3em")
                     .attr("fill", "black")
-                    //.style("text-anchor" , "right")
                     .style("font-size", "11px")
                     .style("font-weight","bold")
                     .html(function(d) {
