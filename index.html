@@ -316,7 +316,7 @@
                                     .attr("r", 5)
                                     .style("stroke", "black")
                                     .style("stroke-width", ".7px")
-                                    .style("fill", "red");
+                                    .style("fill", "darkred");
 
             });
 
@@ -522,7 +522,7 @@
                 .attr("x", function(d,i){return i*(BAR_WIDTH+1);})
                 .attr("y", function(d){return bar_yScale(d[0]);})
 
-                .on("mouseover", function(data){ //added data in function() to refer to the bar
+                .on("mouseover", function(data){
                                         d3.select(this)
                                                 .transition()
                                                 .duration(500)
@@ -835,7 +835,7 @@
            .attr("cx",564)
            .attr("cy",15)
            .attr("r", 5)
-           .style("fill", "red")
+           .style("fill", "darkred")
            .style("stroke", "black")
            .style("stroke-width", ".7px")
        svgMap.append("text")
